@@ -2,7 +2,7 @@
 // them (class, level, combat power, gear score, Odyle energy), kept between
 // sessions. Basic energy refills while you are away, so it is shown as it
 // likely is now (≈), until the game says again.
-const { CAPS, nextRefill, estimate, fullAt, EVERY } = globalThis.RosterLogic;
+const { CAPS, nextRefill, estimate, fullAt, EVERY, factionOf, displayOptions, matchesSelection, characterVisible } = globalThis.RosterLogic;
 const SERVERS = globalThis.ROSTER_SERVERS || {};
 const UI = globalThis.ROSTER_UI;
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -29,7 +29,7 @@ const CLASSES = {
 //   energy: { basic, charged, at }, cap, seen, counts } }
 // servers: { "<serverId>": { counts } } for content shared on a server.
 // counts: { "<entry id>": { v: [left, extra], at } } as the game last said.
-const state = { chars: {}, servers: {}, prefs: { sort: "name", tab: "roster" } };
+const state = { chars: {}, servers: {}, prefs: { sort: "name", tab: "roster", filters: displayOptions() } };
 let current = null; // the key of who is playing now
 let gameRunning = true; // meters before 2.0.65 don't say
 let saveTimer = 0;
@@ -61,6 +61,7 @@ a2.on("character", (c) => {
   // character of it (#122).
   if (!c?.name || !c.serverId) return;
   const key = `${c.name}@${c.serverId ?? ""}`;
+  const firstSeen = !state.chars[key];
   // 560 until more is seen: only a membership goes over it.
   const ch = (state.chars[key] ||= { name: c.name, serverId: c.serverId, cap: CAPS[1] });
   ch.name = c.name;
@@ -142,6 +143,7 @@ a2.on("character", (c) => {
   // doesn't write storage again.
   if (key !== current || Date.now() - (ch.seen || 0) > 300_000) ch.seen = Date.now();
   current = key;
+  if (firstSeen) renderFilters();
   save();
   render();
 });
@@ -290,6 +292,9 @@ function sorted(rows) {
   return rows.sort((a, b) => by(a, b) || a.ch.name.localeCompare(b.ch.name));
 }
 
+const visibleCharacter = (key, ch) => characterVisible(key, ch, gameRunning ? current : null, state.chars[current], state.prefs.filters);
+const contentKey = (entry) => `${entry.id}@${entry.scope}`;
+
 function render() {
   if (state.prefs.tab !== "roster") {
     renderContent();
@@ -311,11 +316,12 @@ function render() {
 
   const q = $(".search").value.trim().toLowerCase();
   const all = Object.entries(state.chars).map(([key, ch]) => view(key, ch, now));
-  const rows = sorted(all.filter((r) => !q || `${r.ch.name} ${serverName(r.ch.serverId)}`.toLowerCase().includes(q)));
+  const visible = all.filter((r) => visibleCharacter(r.key, r.ch));
+  const rows = sorted(visible.filter((r) => !q || `${r.ch.name} ${serverName(r.ch.serverId)}`.toLowerCase().includes(q)));
   $(".count").textContent = all.length ? t.count(rows.length, all.length) : "";
 
   // Full: each refill until they spend some is lost.
-  const capped = all.filter((r) => r.est?.full && !r.playing);
+  const capped = visible.filter((r) => r.est?.full && !r.playing && !matchesSelection(state.prefs.filters.warnings, r.key, r.ch));
   $(".capped").hidden = !capped.length;
   if (capped.length) {
     $(".capped").replaceChildren(
@@ -382,7 +388,7 @@ const OTHER = [
 ];
 const PASSAGES = [10000001, 10000002, 10000003];
 // A server's side, as its id says: 1xxx Elyos, 2xxx Asmodian.
-const sideOf = (serverId) => ({ 1: "elyos", 2: "asmodian" })[String(serverId ?? "")[0]];
+const sideOf = factionOf;
 
 // The recharges between two times: daily or weekly resets passed.
 function resetsBetween(every, from, to) {
@@ -417,13 +423,14 @@ function countNow(c, seen, now) {
 function renderContent() {
   const now = Date.now();
   const other = state.prefs.tab === "other";
-  const list = other ? OTHER : CONTENT;
+  const list = (other ? OTHER : CONTENT).filter((entry) => !state.prefs.filters.hiddenContent.includes(contentKey(entry)));
   const table = $(".contentTable");
   // The server and characters of who is playing, else of the last played.
   const chars = Object.entries(state.chars).map(([key, ch]) => ({ key, ch }));
   const lead = state.chars[current] || chars.slice().sort((a, b) => (b.ch.seen || 0) - (a.ch.seen || 0))[0]?.ch;
   const serverId = lead?.serverId;
-  const mine = chars.filter((c) => c.ch.serverId === serverId)
+  const allMine = chars.filter((c) => c.ch.serverId === serverId);
+  const mine = allMine.filter((c) => visibleCharacter(c.key, c.ch))
     .sort((a, b) => (b.key === current) - (a.key === current) || a.ch.name.localeCompare(b.ch.name));
 
   const head = el("tr");
@@ -464,7 +471,8 @@ function renderContent() {
         el("span", null, c.siege ? t.perSiege(c.cap) : c.used ? (every === "weekly" ? t.perWeek(fmt.format(c.cap)) : t.perDay(fmt.format(c.cap))) : t.capLine(c.cap, c.add, every === "weekly")));
       name.append(meta);
       tr.append(name);
-      const shared = c.ofChars ? sumOfChars(c, mine, now) : state.servers[serverId ?? ""]?.counts?.[c.id];
+      // Hiding a character changes the columns, not the server-wide total.
+      const shared = c.ofChars ? sumOfChars(c, allMine, now) : state.servers[serverId ?? ""]?.counts?.[c.id];
       tr.append(c.scope === "server" ? cellOf(c, shared, at, now, "serverCol") : el("td", "serverCol na"));
       for (const m of mine) tr.append(c.scope === "char" ? cellOf(c, m.ch.counts?.[c.id], at, now) : el("td", "na"));
       tbody.append(tr);
@@ -664,6 +672,97 @@ $(".sort").addEventListener("change", (e) => {
   render();
 });
 
+// Display rules never remove stored characters or change their game counts.
+function renderFilters() {
+  const words = t.filters;
+  $(".displayOptionsTitle").textContent = words.title;
+  const allOverride = state.prefs.filters.always.mode === "all" && state.prefs.filters.current !== "never";
+  $(".filterNote").textContent = `${words.note}${allOverride ? ` ${words.allOverridesCurrent}` : ""}`;
+  $(".contentOptionsTitle").textContent = words.hiddenContent;
+  $(".resetDisplay").textContent = words.reset;
+  const entries = Object.entries(state.chars).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const choices = (mode) => mode === "faction"
+    ? Object.entries(words.factions)
+    : mode === "server"
+      ? [...new Set(entries.map(([, ch]) => String(ch.serverId)).filter((id) => id && id !== "undefined"))]
+        .map((id) => [id, serverName(id)]).sort((a, b) => a[1].localeCompare(b[1]))
+      : entries.map(([key, ch]) => [key, `${ch.name} · ${serverName(ch.serverId)}`]);
+  const rows = [];
+  for (const [key, modes] of [
+    ["never", ["disabled", "faction", "server", "character"]],
+    ["always", ["all", "faction", "server", "character"]],
+    ["current", ["never", "faction", "server", "character"]],
+    ["warnings", ["none", "faction", "server", "character"]],
+  ]) {
+    const row = el("div", "filterRule");
+    const label = el("label", "filterLabel", words[key]);
+    const select = el("select");
+    select.id = `display-${key}`;
+    label.htmlFor = select.id;
+    for (const mode of modes) {
+      const option = el("option", null, words.modes[mode]);
+      option.value = mode;
+      select.append(option);
+    }
+    const rule = state.prefs.filters[key];
+    select.value = key === "current" ? rule : rule.mode;
+    select.addEventListener("change", () => {
+      state.prefs.filters[key] = key === "current" ? select.value : { mode: select.value, values: [] };
+      save();
+      renderFilters();
+      $(`#display-${key}`)?.focus();
+      render();
+    });
+    row.append(label, select);
+    if (key !== "current" && ["faction", "server", "character"].includes(rule.mode)) {
+      const values = choices(rule.mode);
+      const field = el("fieldset", "filterChoices");
+      field.append(el("legend", null, words.selectValues));
+      if (!values.length) field.append(el("span", "filterEmpty", words.noChoices));
+      for (const [value, name] of values) {
+        const item = el("label");
+        const check = el("input");
+        check.type = "checkbox";
+        check.value = value;
+        check.checked = rule.values.includes(value);
+        check.addEventListener("change", () => {
+          rule.values = check.checked ? [...new Set([...rule.values, value])] : rule.values.filter((v) => v !== value);
+          save();
+          render();
+        });
+        item.append(check, document.createTextNode(name));
+        field.append(item);
+      }
+      row.append(field);
+    }
+    rows.push(row);
+  }
+  $(".filterRules").replaceChildren(...rows);
+  const contentChoices = [];
+  for (const entry of [...CONTENT, ...OTHER]) {
+    const label = el("label");
+    const check = el("input");
+    const key = contentKey(entry);
+    check.type = "checkbox";
+    check.checked = state.prefs.filters.hiddenContent.includes(key);
+    check.addEventListener("change", () => {
+      const hidden = state.prefs.filters.hiddenContent;
+      state.prefs.filters.hiddenContent = check.checked ? [...new Set([...hidden, key])] : hidden.filter((v) => v !== key);
+      save();
+      render();
+    });
+    label.append(check, document.createTextNode(`${t.names[entry.name]} · ${entry.scope === "char" ? t.perChar : t.serverWide}`));
+    contentChoices.push(label);
+  }
+  $(".contentChoices").replaceChildren(...contentChoices);
+}
+$(".resetDisplay").addEventListener("click", () => {
+  state.prefs.filters = displayOptions();
+  save();
+  renderFilters();
+  render();
+});
+
 // The page's fixed words (index.html), in the meter's language.
 function applyLanguage() {
   document.documentElement.lang = lang;
@@ -675,6 +774,7 @@ function applyLanguage() {
   for (const o of $(".sort").options) o.textContent = t.sort[o.value] ?? o.textContent;
   const cols = [t.colChar, t.colCombat, t.colGear, t.colBasic, t.colCharged, t.colFullIn];
   document.querySelectorAll(".head span").forEach((s, i) => (s.textContent = cols[i] ?? s.textContent));
+  renderFilters();
 }
 
 // ── Start ──────────────────────────────────────────────────────────────────
@@ -687,6 +787,7 @@ function applyLanguage() {
   if (chars && typeof chars === "object") state.chars = chars;
   if (servers && typeof servers === "object") state.servers = servers;
   Object.assign(state.prefs, prefs || {});
+  state.prefs.filters = displayOptions(state.prefs.filters);
   for (const key of ["chars", "prefs", "servers"]) written[key] = JSON.stringify(state[key]);
   // Characters kept with no server (#122): gone where the same name has its
   // server, what they had that it lacks kept with it.
@@ -701,6 +802,7 @@ function applyLanguage() {
   }
   if (merged) save();
   $(".sort").value = state.prefs.sort;
+  renderFilters();
   showTab(state.prefs.tab);
   a2.ready();
   // The countdowns, and the one playing stays "seen now" (saved every 5 min).

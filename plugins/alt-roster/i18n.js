@@ -5,6 +5,15 @@
 // and Daily Dungeon are translated.
 globalThis.ROSTER_UI = {
   en: {
+    filters: {
+      title: "Display and warnings", never: "Never show", always: "Always show", current: "Only show current",
+      allOverridesCurrent: "Always show is set to All, so the current-character filter does not hide any characters.",
+      warnings: "Disable full-energy warnings for", hiddenContent: "Hide tracked content",
+      note: "Never show takes priority. Always show keeps selected characters visible when the current-character filter hides others. Content and Other still focus the current or last-played server.",
+      selectValues: "Select one or more", noChoices: "No characters recorded yet", reset: "Reset display options",
+      modes: { disabled: "Disabled", all: "All", none: "None", never: "Never", faction: "Faction", server: "Server(s)", character: "Character(s)" },
+      factions: { elyos: "Elyos", asmodian: "Asmodian" },
+    },
     units: { d: "d", h: "h", m: "m", sep: " " },
     tabOther: "Other", perWeek: (n) => `${n} a week`, usedToday: (t) => `today · new in ${t}`, usedWeek: (t) => `this week · new in ${t}`,
     otherNote: "As the game last said: the shop and crafting rows once that window has opened on a character, the rest from each login. Weekly rows reset Wednesday 07:00 UTC.",
@@ -48,6 +57,15 @@ globalThis.ROSTER_UI = {
     classes: ["Gladiator", "Templar", "Assassin", "Ranger", "Sorcerer", "Spiritmaster", "Cleric", "Chanter", "Brawler"],
   },
   ko: {
+    filters: {
+      title: "표시 및 경고", never: "표시하지 않음", always: "항상 표시", current: "현재 플레이 중인 항목만 표시",
+      allOverridesCurrent: "항상 표시가 전체로 설정되어 있어 현재 캐릭터 필터로 숨겨지는 캐릭터가 없습니다.",
+      warnings: "에너지 최대치 경고 제외", hiddenContent: "추적 중인 콘텐츠 숨기기",
+      note: "표시하지 않음이 우선합니다. 항상 표시로 선택한 캐릭터는 현재 캐릭터 필터와 관계없이 표시됩니다. 콘텐츠와 기타 탭은 현재 또는 마지막으로 플레이한 서버를 계속 보여 줍니다.",
+      selectValues: "하나 이상 선택", noChoices: "아직 기록된 캐릭터가 없습니다", reset: "표시 옵션 초기화",
+      modes: { disabled: "사용 안 함", all: "전체", none: "없음", never: "사용 안 함", faction: "진영", server: "서버", character: "캐릭터" },
+      factions: { elyos: "천족", asmodian: "마족" },
+    },
     units: { d: "일", h: "시간", m: "분", sep: " " },
     tabOther: "기타", perWeek: (n) => `주 ${n}회`, usedToday: (t) => `오늘 · ${t} 후 초기화`, usedWeek: (t) => `이번 주 · ${t} 후 초기화`,
     otherNote: "게임이 마지막으로 알려 준 값입니다. 상점·제작 항목은 캐릭터로 그 창을 연 뒤, 나머지는 접속할 때마다 갱신됩니다. 주간 항목은 수요일 07:00 UTC 초기화.",
@@ -91,6 +109,15 @@ globalThis.ROSTER_UI = {
     classes: ["검성", "수호성", "살성", "궁성", "마도성", "정령성", "치유성", "호법성", "권성"],
   },
   ja: {
+    filters: {
+      title: "表示と警告", never: "表示しない", always: "常に表示", current: "現在の対象のみ表示",
+      allOverridesCurrent: "「常に表示」が「すべて」になっているため、現在のキャラクターのフィルターではキャラクターを非表示にしません。",
+      warnings: "エネルギー満タンの警告を無効にする対象", hiddenContent: "追跡中のコンテンツを非表示",
+      note: "「表示しない」が優先されます。「常に表示」で選んだキャラクターは、現在のキャラクターのフィルターに関係なく表示されます。「コンテンツ」と「その他」は現在または最後にプレイしたサーバーを表示します。",
+      selectValues: "1つ以上選択", noChoices: "まだ記録されたキャラクターがありません", reset: "表示設定をリセット",
+      modes: { disabled: "無効", all: "すべて", none: "なし", never: "絞り込まない", faction: "種族", server: "サーバー", character: "キャラクター" },
+      factions: { elyos: "天族", asmodian: "魔族" },
+    },
     units: { d: "日", h: "時間", m: "分", sep: " " },
     tabOther: "その他", perWeek: (n) => `週${n}回`, usedToday: (t) => `本日 · あと${t}でリセット`, usedWeek: (t) => `今週 · あと${t}でリセット`,
     otherNote: "ゲームが最後に伝えた値です。ショップ・製作の行はキャラクターでその画面を開いた後、それ以外はログインごとに更新。毎週の行は水曜 07:00 UTC にリセット。",
@@ -134,6 +161,15 @@ globalThis.ROSTER_UI = {
     classes: ["グラディエーター", "テンプラー", "アサシン", "レンジャー", "ソーサラー", "スピリットマスター", "クレリック", "チャンター", "ファイター"],
   },
   de: {
+    filters: {
+      title: "Anzeige und Warnungen", never: "Nie anzeigen", always: "Immer anzeigen", current: "Nur aktuelle anzeigen",
+      allOverridesCurrent: "„Immer anzeigen“ ist auf „Alle“ gesetzt. Der Filter für den aktuellen Charakter blendet daher keine Charaktere aus.",
+      warnings: "Warnungen bei voller Energie deaktivieren für", hiddenContent: "Erfasste Inhalte ausblenden",
+      note: "„Nie anzeigen“ hat Vorrang. Mit „Immer anzeigen“ ausgewählte Charaktere bleiben trotz des Filters für den aktuellen Charakter sichtbar. „Inhalte“ und „Andere“ zeigen weiterhin den aktuellen oder zuletzt gespielten Server.",
+      selectValues: "Einen oder mehrere auswählen", noChoices: "Noch keine Charaktere erfasst", reset: "Anzeigeoptionen zurücksetzen",
+      modes: { disabled: "Deaktiviert", all: "Alle", none: "Keine", never: "Nie", faction: "Fraktion", server: "Server", character: "Charaktere" },
+      factions: { elyos: "Elyos", asmodian: "Asmodier" },
+    },
     units: { d: "T", h: "h", m: "min", sep: " " },
     tabOther: "Sonstiges", perWeek: (n) => `${n} pro Woche`, usedToday: (t) => `heute · neu in ${t}`, usedWeek: (t) => `diese Woche · neu in ${t}`,
     otherNote: "Wie das Spiel zuletzt sagte: Laden- und Herstellungszeilen, sobald das Fenster auf einem Charakter offen war, der Rest bei jedem Login. Wöchentliche Zeilen: Reset Mittwoch 07:00 UTC.",
@@ -177,6 +213,15 @@ globalThis.ROSTER_UI = {
     classes: ["Gladiator", "Templer", "Assassine", "Waldläufer", "Magier", "Beschwörer", "Kleriker", "Kantor", "Faustkämpfer"],
   },
   fr: {
+    filters: {
+      title: "Affichage et alertes", never: "Ne jamais afficher", always: "Toujours afficher", current: "Afficher uniquement les éléments actuels",
+      allOverridesCurrent: "« Toujours afficher » est réglé sur « Tous » : le filtre du personnage actuel ne masque donc aucun personnage.",
+      warnings: "Désactiver les alertes d’énergie pleine pour", hiddenContent: "Masquer les contenus suivis",
+      note: "« Ne jamais afficher » est prioritaire. Les personnages choisis dans « Toujours afficher » restent visibles même si le filtre du personnage actuel masque les autres. « Contenu » et « Autres » affichent toujours le serveur actuel ou le dernier joué.",
+      selectValues: "Sélectionner un ou plusieurs éléments", noChoices: "Aucun personnage enregistré", reset: "Réinitialiser les options d’affichage",
+      modes: { disabled: "Désactivé", all: "Tous", none: "Aucun", never: "Jamais", faction: "Faction", server: "Serveur(s)", character: "Personnage(s)" },
+      factions: { elyos: "Élyséens", asmodian: "Asmodiens" },
+    },
     units: { d: "j", h: "h", m: "min", sep: " " },
     tabOther: "Autres", perWeek: (n) => `${n} par semaine`, usedToday: (t) => `aujourd'hui · nouveau dans ${t}`, usedWeek: (t) => `cette semaine · nouveau dans ${t}`,
     otherNote: "Comme le jeu l'a dit en dernier : les lignes de boutique et d'artisanat une fois la fenêtre ouverte sur un personnage, le reste à chaque connexion. Lignes hebdomadaires réinitialisées le mercredi à 07:00 UTC.",
@@ -220,6 +265,15 @@ globalThis.ROSTER_UI = {
     classes: ["Gladiateur", "Templier", "Assassin", "Rôdeur", "Sorcier", "Spiritualiste", "Clerc", "Aède", "Pugiliste"],
   },
   es: {
+    filters: {
+      title: "Visualización y avisos", never: "No mostrar nunca", always: "Mostrar siempre", current: "Mostrar solo los actuales",
+      allOverridesCurrent: "«Mostrar siempre» está en «Todos», por lo que el filtro del personaje actual no oculta ningún personaje.",
+      warnings: "Desactivar avisos de energía llena para", hiddenContent: "Ocultar contenido registrado",
+      note: "«No mostrar nunca» tiene prioridad. Los personajes elegidos en «Mostrar siempre» siguen visibles aunque el filtro del personaje actual oculte a los demás. «Contenido» y «Otros» siguen mostrando el servidor actual o el último jugado.",
+      selectValues: "Selecciona uno o varios", noChoices: "Aún no hay personajes registrados", reset: "Restablecer opciones de visualización",
+      modes: { disabled: "Desactivado", all: "Todos", none: "Ninguno", never: "Nunca", faction: "Facción", server: "Servidor(es)", character: "Personaje(s)" },
+      factions: { elyos: "Elyos", asmodian: "Asmodianos" },
+    },
     units: { d: "d", h: "h", m: "min", sep: " " },
     tabOther: "Otros", perWeek: (n) => `${n} a la semana`, usedToday: (t) => `hoy · nuevo en ${t}`, usedWeek: (t) => `esta semana · nuevo en ${t}`,
     otherNote: "Según lo último que dijo el juego: las filas de tienda y fabricación una vez abierta esa ventana con un personaje, el resto en cada inicio de sesión. Las semanales se reinician el miércoles a las 07:00 UTC.",
@@ -263,6 +317,15 @@ globalThis.ROSTER_UI = {
     classes: ["Gladiador", "Templario", "Sicario", "Ranger", "Hechicero", "Espiritualista", "Clérigo", "Conjurador", "Luchador"],
   },
   pt: {
+    filters: {
+      title: "Exibição e avisos", never: "Nunca mostrar", always: "Sempre mostrar", current: "Mostrar apenas os atuais",
+      allOverridesCurrent: "«Sempre mostrar» está definido como «Todos», por isso o filtro do personagem atual não oculta nenhum personagem.",
+      warnings: "Desativar avisos de energia cheia para", hiddenContent: "Ocultar conteúdos acompanhados",
+      note: "«Nunca mostrar» tem prioridade. Os personagens escolhidos em «Sempre mostrar» continuam visíveis quando o filtro do personagem atual oculta os outros. «Conteúdo» e «Outros» continuam mostrando o servidor atual ou o último jogado.",
+      selectValues: "Selecione um ou mais", noChoices: "Nenhum personagem registrado ainda", reset: "Redefinir opções de exibição",
+      modes: { disabled: "Desativado", all: "Todos", none: "Nenhum", never: "Nunca", faction: "Facção", server: "Servidor(es)", character: "Personagem(ns)" },
+      factions: { elyos: "Elyos", asmodian: "Asmodianos" },
+    },
     units: { d: "d", h: "h", m: "min", sep: " " },
     tabOther: "Outros", perWeek: (n) => `${n} por semana`, usedToday: (t) => `hoje · novo em ${t}`, usedWeek: (t) => `esta semana · novo em ${t}`,
     otherNote: "Como o jogo disse por último: as linhas de loja e criação depois de abrir essa janela num personagem, o resto a cada login. As semanais reiniciam na quarta às 07:00 UTC.",
@@ -306,6 +369,15 @@ globalThis.ROSTER_UI = {
     classes: ["Gladiador", "Templário", "Assassino", "Arqueiro", "Mago", "Espiritualista", "Clérigo", "Encantador", "Lutador"],
   },
   ru: {
+    filters: {
+      title: "Отображение и предупреждения", never: "Никогда не показывать", always: "Всегда показывать", current: "Показывать только текущие",
+      allOverridesCurrent: "Для «Всегда показывать» выбрано «Все», поэтому фильтр текущего персонажа не скрывает персонажей.",
+      warnings: "Отключить предупреждения о полной энергии для", hiddenContent: "Скрыть отслеживаемый контент",
+      note: "«Никогда не показывать» имеет приоритет. Выбранные в «Всегда показывать» персонажи остаются видимыми, даже если фильтр текущего персонажа скрывает остальных. «Контент» и «Другое» по-прежнему показывают текущий или последний использованный сервер.",
+      selectValues: "Выберите один или несколько вариантов", noChoices: "Пока нет записанных персонажей", reset: "Сбросить параметры отображения",
+      modes: { disabled: "Отключено", all: "Все", none: "Нет", never: "Никогда", faction: "Раса", server: "Серверы", character: "Персонажи" },
+      factions: { elyos: "Элийцы", asmodian: "Асмодиане" },
+    },
     units: { d: "д", h: "ч", m: "мин", sep: " " },
     tabOther: "Прочее", perWeek: (n) => `${n} в неделю`, usedToday: (t) => `сегодня · новые через ${t}`, usedWeek: (t) => `на этой неделе · новые через ${t}`,
     otherNote: "Как игра сообщила в последний раз: строки магазина и создания — после открытия этого окна на персонаже, остальное — при каждом входе. Еженедельные строки сбрасываются в среду в 07:00 UTC.",
@@ -349,6 +421,15 @@ globalThis.ROSTER_UI = {
     classes: ["Гладиатор", "Страж", "Убийца", "Стрелок", "Волшебник", "Заклинатель", "Целитель", "Чародей", "Мастер кулака"],
   },
   "zh-Hans": {
+    filters: {
+      title: "显示与提醒", never: "从不显示", always: "始终显示", current: "仅显示当前",
+      allOverridesCurrent: "“始终显示”已设为“全部”，因此当前角色筛选不会隐藏任何角色。",
+      warnings: "关闭以下对象的能量已满提醒", hiddenContent: "隐藏已追踪内容",
+      note: "“从不显示”优先。即使当前角色筛选隐藏了其他角色，“始终显示”中选定的角色仍会显示。“内容”和“其他”仍显示当前或上次游玩的服务器。",
+      selectValues: "选择一项或多项", noChoices: "尚未记录任何角色", reset: "重置显示选项",
+      modes: { disabled: "禁用", all: "全部", none: "无", never: "不限制", faction: "种族", server: "服务器", character: "角色" },
+      factions: { elyos: "天族", asmodian: "魔族" },
+    },
     units: { d: "天", h: "小时", m: "分钟", sep: "" },
     tabOther: "其他", perWeek: (n) => `每周 ${n} 次`, usedToday: (t) => `今日 · ${t}后刷新`, usedWeek: (t) => `本周 · ${t}后刷新`,
     otherNote: "游戏最后告知的数值：商店和制作行在角色打开该窗口后更新，其余每次登录时更新。每周行在周三 07:00 UTC 重置。",
@@ -392,6 +473,15 @@ globalThis.ROSTER_UI = {
     classes: ["剑圣", "守护圣", "杀圣", "弓圣", "魔道圣", "精灵圣", "治愈圣", "护法圣", "拳圣"],
   },
   "zh-Hant": {
+    filters: {
+      title: "顯示與提醒", never: "從不顯示", always: "一律顯示", current: "僅顯示目前",
+      allOverridesCurrent: "「一律顯示」已設為「全部」，因此目前角色篩選不會隱藏任何角色。",
+      warnings: "關閉以下對象的能量已滿提醒", hiddenContent: "隱藏已追蹤內容",
+      note: "「從不顯示」優先。即使目前角色篩選隱藏了其他角色，「一律顯示」中選定的角色仍會顯示。「內容」和「其他」仍顯示目前或上次遊玩的伺服器。",
+      selectValues: "選擇一項或多項", noChoices: "尚未記錄任何角色", reset: "重設顯示選項",
+      modes: { disabled: "停用", all: "全部", none: "無", never: "不限制", faction: "種族", server: "伺服器", character: "角色" },
+      factions: { elyos: "天族", asmodian: "魔族" },
+    },
     units: { d: "天", h: "小時", m: "分鐘", sep: "" },
     tabOther: "其他", perWeek: (n) => `每週 ${n} 次`, usedToday: (t) => `今日 · ${t}後刷新`, usedWeek: (t) => `本週 · ${t}後刷新`,
     otherNote: "遊戲最後告知的數值：商店和製作行在角色打開該視窗後更新，其餘每次登入時更新。每週行在週三 07:00 UTC 重置。",

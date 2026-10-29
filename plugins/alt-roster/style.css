@@ -68,6 +68,18 @@ button { cursor: pointer; }
 .search { flex: 1; min-width: 0; padding: 3px 7px; }
 .count { font-size: 12px; color: var(--dim); white-space: nowrap; }
 
+.displayOptions { flex: none; margin-top: 8px; max-height: 48%; overflow: auto; border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; }
+.displayOptions summary { cursor: pointer; color: var(--accent); }
+.filterNote { color: var(--dim); font-size: 11px; margin: 6px 0; }
+.filterRules { display: grid; gap: 7px; }
+.filterRule { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, 1fr); gap: 4px 8px; align-items: center; }
+.filterChoices { grid-column: 1 / -1; border: 1px solid var(--line); margin: 0; padding: 3px 6px; max-height: 110px; overflow: auto; }
+.filterChoices legend, .filterEmpty { font-size: 11px; color: var(--dim); }
+.filterChoices label, .contentChoices label { display: flex; align-items: center; gap: 5px; font-size: 12px; padding: 2px 0; }
+.contentOptions { margin-top: 7px; }
+.contentChoices { max-height: 150px; overflow: auto; padding: 4px; }
+.resetDisplay { margin-top: 7px; padding: 3px 7px; }
+
 /* The list: a table while there's room, cards when narrow. */
 .head, .row {
   display: grid;
@@ -142,7 +154,7 @@ button { cursor: pointer; }
 }
 
 /* The fold button: name and energy only. */
-body.compact .top, body.compact .toolbar, body.compact .head, body.compact .foot,
+body.compact .top, body.compact .toolbar, body.compact .head, body.compact .foot, body.compact .displayOptions,
 body.compact .cp, body.compact .gs, body.compact .charged, body.compact .sub, body.compact .seen { display: none; }
 body.compact .row {
   grid-template-columns: minmax(100px, 1fr) minmax(90px, 1fr) 60px;

@@ -23,6 +23,22 @@ move it to a second monitor: it never hides by itself.
   confirm) removes a character; it comes back when you play it. A character
   moved to another server shows up as a new one: remove the old row.
 - The fold button leaves only names, energy and Full in.
+- **Display and warnings**: choose which factions, servers or characters
+  never show, which always show, and whether the remaining characters must
+  match the current character's faction, server or name. Never show wins
+  over Always show, which wins over Only show current. The defaults keep
+  every character visible: Always show set to All overrides the current
+  filter too. To focus on the current character with pinned exceptions,
+  set Always show to Character(s), choose your pinned characters, then set
+  Only show current to Character(s). Before the meter identifies the current
+  character, the current filter leaves the list visible.
+- Suppress full-energy warnings for selected factions, servers or
+  characters independently of their visibility. Hide individual tracked
+  content rows from the same options panel. These settings affect the
+  display only: stored characters and counts remain, and hidden characters
+  still contribute to server-wide totals. Content and Other keep focusing
+  the current or last-played server. **Reset display options** restores the
+  default filters without removing any saved character.
 - **Content** tab: Nightmare and Ascension Trial left per character, Shugo
   Festival, Invasion and Daily Dungeon per server, as the game last said,
   with the extra from recharge items (`+N`). Daily Duty shows the quests
