@@ -1,5 +1,9 @@
 [
   {
+    "version": "0.6.21",
+    "en": "Events and bosses can stay visible together, in separate sections. Hide any boss with × and restore it from Hidden; its alerts and pinned icons keep their settings."
+  },
+  {
     "version": "0.6.20",
     "en": "Uses less memory: its sound engine closes after 30 seconds of silence and starts again for the next alert.",
     "ko": "메모리를 덜 사용합니다. 30초 동안 소리가 없으면 사운드 엔진을 닫고, 다음 알림 때 다시 시작합니다.",
@@ -50,18 +54,5 @@
     "ru": "Гораздо легче для ПК: расчёт времени занимал около половины ядра процессора и сотни МБ, теперь почти ничего.",
     "zh-Hant": "大幅減輕電腦負擔：計算時間原本要用約半個 CPU 核心和數百 MB，現在幾乎不佔資源。",
     "zh-Hans": "大幅减轻电脑负担：计算时间原本要用约半个 CPU 核心和数百 MB，现在几乎不占资源。"
-  },
-  {
-    "version": "0.6.16",
-    "en": "The anchor's window closes while it shows nothing, so it never catches your clicks.",
-    "ko": "앵커에 표시할 것이 없으면 창이 닫혀 클릭을 가로채지 않습니다.",
-    "ja": "アンカーに表示するものがない間はウィンドウが閉じ、クリックを奪いません。",
-    "de": "Das Fenster des Ankers schließt sich, solange es nichts zeigt, und fängt so keine Klicks ab.",
-    "fr": "La fenêtre de l'ancre se ferme quand elle n'affiche rien, et ne capte donc plus vos clics.",
-    "es": "La ventana del ancla se cierra mientras no muestra nada, así que no atrapa tus clics.",
-    "pt": "A janela da âncora fecha enquanto não mostra nada, e não captura seus cliques.",
-    "ru": "Окно якоря закрывается, пока ему нечего показать, и не перехватывает щелчки.",
-    "zh-Hant": "錨點沒有內容時視窗會關閉，不會攔截你的點擊。",
-    "zh-Hans": "锚点没有内容时窗口会关闭，不会拦截你的点击。"
   }
 ]

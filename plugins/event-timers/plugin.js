@@ -37,7 +37,9 @@ const els = {
     settings: $(".view.settings"),
   },
   events: $(".eventList"),
+  eventsHead: $(".eventsHead"),
   hidden: $(".hidden"),
+  hiddenBosses: $(".hiddenBosses"),
   scheduledHead: $(".scheduledHead"),
   scheduled: $(".scheduledList"),
   fieldHead: $(".fieldHead"),
@@ -679,6 +681,7 @@ function renderStatic() {
   const a = aui();
   const labels = { events: words.events, bosses: words.bosses, alerts: a.alerts, settings: a.settings };
   for (const tab of els.tabs) tab.textContent = labels[tab.dataset.tab];
+  els.eventsHead.textContent = words.events;
   els.regionLabel.textContent = words.region;
   els.zoneLabel.textContent = a.showIn;
   els.scaleLabel.textContent = words.textSize;
@@ -753,9 +756,33 @@ function applyScale() {
   document.documentElement.style.zoom = String(Math.round(BASE_ZOOM * scale * 1000) / 1000);
 }
 
+// Events and bosses are independent list switches. Alerts and Settings still
+// take the whole window, remembering the last timer selection when left.
+function timerViews() {
+  const selected = Array.isArray(prefs.timerViews)
+    ? ["events", "bosses"].filter((name) => prefs.timerViews.includes(name)) : [];
+  return selected.length ? selected : [prefs.tab === "bosses" ? "bosses" : "events"];
+}
+
+function selectTab(name) {
+  if (["events", "bosses"].includes(name)) {
+    let selected = timerViews();
+    const showingTimers = ["events", "bosses", "both"].includes(prefs.tab);
+    if (showingTimers && selected.includes(name) && selected.length > 1) selected = selected.filter((v) => v !== name);
+    else if (!selected.includes(name)) selected.push(name);
+    prefs.timerViews = selected;
+    prefs.tab = selected.length === 2 ? "both" : selected[0];
+  } else prefs.tab = name;
+  savePrefs();
+  renderTabs();
+}
+
 function renderTabs() {
-  for (const tab of els.tabs) tab.setAttribute("aria-selected", String(tab.dataset.tab === prefs.tab));
-  for (const [name, view] of Object.entries(els.views)) view.hidden = name !== prefs.tab;
+  const visible = ["events", "bosses", "both"].includes(prefs.tab) ? timerViews() : [prefs.tab];
+  for (const tab of els.tabs) tab.setAttribute("aria-pressed", String(visible.includes(tab.dataset.tab)));
+  for (const [name, view] of Object.entries(els.views)) view.hidden = !visible.includes(name);
+  els.eventsHead.hidden = visible.length !== 2;
+  document.body.classList.toggle("combinedTimers", visible.length === 2);
 }
 
 // The header: server, region and its clock; the resets.
@@ -829,8 +856,22 @@ function rowActions(id) {
   gear.title = state ? r.settings : r.settingsOff;
   gear.setAttribute("aria-label", gear.title);
   gear.innerHTML = GEAR_ICON;
-  box.append(bell, gear);
+  const hide = document.createElement("button");
+  hide.type = "button";
+  hide.className = "rowBtn";
+  hide.dataset.act = "hide";
+  hide.dataset.id = id;
+  hide.textContent = "×";
+  hide.title = ui().hide;
+  hide.setAttribute("aria-label", hide.title);
+  box.append(bell, gear, hide);
   return box;
+}
+
+function hideCountdown(id) {
+  prefs.hidden = [...new Set([...prefs.hidden, id])];
+  savePrefs();
+  render();
 }
 
 function toggleBossAlert(id) {
@@ -852,6 +893,7 @@ for (const list of [els.scheduled, els.field]) {
     e.stopPropagation();
     const id = btn.dataset.id;
     if (btn.dataset.act === "alert") toggleBossAlert(id);
+    else if (btn.dataset.act === "hide") hideCountdown(id);
     else if (btn.dataset.act === "settings") {
       const { key } = bossAlert(id);
       if (key) openAlert(key);
@@ -989,17 +1031,13 @@ function renderSchedule(list, events, now, { hideable, actions = false }) {
   list.replaceChildren(...visible.map(({ ev, next }) => {
     const running = next.start <= now;
     let hide = null;
-    if (hideable) {
+    if (hideable && !actions) {
       hide = document.createElement("button");
       hide.type = "button";
       hide.className = "hide";
       hide.textContent = "×";
       hide.title = words.hide;
-      hide.addEventListener("click", () => {
-        prefs.hidden = [...new Set([...prefs.hidden, ev.id])];
-        savePrefs();
-        render();
-      });
+      hide.addEventListener("click", () => hideCountdown(ev.id));
     }
     // An Abyss boss fought now: its HP as players' meters report it.
     const live = ev.kind === "boss" ? abyssLive(ev) : null;
@@ -1017,23 +1055,26 @@ function renderSchedule(list, events, now, { hideable, actions = false }) {
   return shown;
 }
 
-function renderHidden(shown) {
+function renderHidden(shown, list = els.hidden) {
   const words = ui();
   const hiddenOnes = shown.filter((x) => prefs.hidden.includes(x.ev.id));
-  els.hidden.replaceChildren();
+  const focused = list.contains(document.activeElement) ? document.activeElement?.dataset.restoreId : null;
+  list.replaceChildren();
   if (!hiddenOnes.length) return;
-  els.hidden.append(words.hidden);
+  list.append(words.hidden);
   for (const { ev } of hiddenOnes) {
     const b = document.createElement("button");
     b.type = "button";
+    b.dataset.restoreId = ev.id;
     b.textContent = text(ev.name);
     b.addEventListener("click", () => {
       prefs.hidden = prefs.hidden.filter((id) => id !== ev.id);
       savePrefs();
       render();
     });
-    els.hidden.append(b);
+    list.append(b);
   }
+  if (focused) [...list.children].find((b) => b.dataset?.restoreId === focused)?.focus({ preventScroll: true });
 }
 
 // World bosses: up ones first, then by when they're back, then the ones no
@@ -1056,7 +1097,7 @@ function renderField(now) {
 function fieldItems(bosses, now, withHeads) {
   const words = ui();
   const fmt = clock();
-  const rows = bosses.map((b) => {
+  const rows = bosses.filter((b) => !prefs.hidden.includes(`field:${b.id}`)).map((b) => {
     const t = fieldTimer(b.id);
     const next = t?.state === "dead" && t.nextSpawn ? t.nextSpawn * 1000 : null;
     const group = t?.state === "up" ? "up" : !next ? "unknown"
@@ -1112,9 +1153,10 @@ function render() {
   if (rowPress) return;
   const focused = document.activeElement?.closest?.(".rowBtn");
   const refocus = focused && { act: focused.dataset.act, id: focused.dataset.id };
-  renderSchedule(els.scheduled, scheduled("boss"), now, { hideable: false, actions: true });
+  const bosses = renderSchedule(els.scheduled, scheduled("boss"), now, { hideable: true, actions: true });
   els.scheduled.append(...fieldItems(fieldBosses().filter(isAbyssBoss), now, false));
   renderField(now);
+  renderHidden([...bosses, ...fieldBosses().map((b) => ({ ev: { id: `field:${b.id}`, name: b.name } }))], els.hiddenBosses);
   // Rows move as timers change: the teleport tooltip follows its row.
   if (tpRow) placeTip();
   if (refocus) {
@@ -1846,11 +1888,7 @@ async function readFeed() {
 }
 
 for (const tab of els.tabs) {
-  tab.addEventListener("click", () => {
-    prefs.tab = tab.dataset.tab;
-    savePrefs();
-    renderTabs();
-  });
+  tab.addEventListener("click", () => selectTab(tab.dataset.tab));
 }
 els.sound.addEventListener("change", () => {
   prefs.sound = els.sound.value;
@@ -2046,7 +2084,8 @@ a2.on("compact", (on) => document.body.classList.toggle("compact", !!on));
   prefs.closedLeads = prefs.closedLeads || {};
   setSoundVolume(prefs.volume);
   // The old single "timers" tab is the events one now.
-  if (!els.views[prefs.tab]) prefs.tab = "events";
+  if (!els.views[prefs.tab] && prefs.tab !== "both") prefs.tab = "events";
+  prefs.timerViews = timerViews();
   applyScale();
   applyColor();
   renderStatic();

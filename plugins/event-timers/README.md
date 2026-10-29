@@ -13,7 +13,9 @@ Countdowns to AION 2's recurring events and scheduled bosses, in your server's t
 | Guardian Lord Nahma | Friday and Sunday at 21:00 |
 | Daily and weekly resets | 07:00 UTC; the weekly one on Wednesday |
 
-Each row shows how long until it starts and the start time (in this computer's time zone, or another you pick under **Settings**, or the server's own clock); a running event shows how long it has left (where the game's data says how long it runs). × hides an event; the hidden ones are listed below the others, and clicking one shows it again. Folded (the window's compact button), only the next three show.
+**Events** and **Bosses** are independent switches: turn both on to see events and bosses together, in separate sections. With both on, press one again to hide that section; the last list stays visible. **Alerts** and **Settings** temporarily replace the lists, remembering your selection when you return. Existing event-only or boss-only selections are preserved.
+
+Each row shows how long until it starts and the start time (in this computer's time zone, or another you pick under **Settings**, or the server's own clock); a running event shows how long it has left (where the game's data says how long it runs). × hides an event or boss; the hidden ones are listed below their section, and clicking one shows it again. Hiding a timer only removes its row: its alerts and pinned icons keep their settings. Folded (the window's compact button), only the next three events show.
 
 ## Alerts
 
@@ -61,3 +63,21 @@ World bosses that respawn a while after they're killed (most of the world map's 
 - `window`: to bring the window up when an alert goes off, if you ask for it.
 
 Plugin API 2: needs meter 2.0.62 or later.
+
+## Changes in 0.6.21
+
+- Events and Bosses can stay open together. Each section keeps its existing timer order, group headings, live HP and unknown-report states.
+- Scheduled, Abyss and world bosses have a Hide button and a restore button under Hidden. Hiding changes the list only; alerts and pinned icons remain configured. Restore buttons keep keyboard focus while the timer rows update.
+- The selected lists are saved. Existing event-only and boss-only preferences continue to open the same list, and the compact view keeps its three-event layout.
+- Alerts and Settings still occupy the full panel. Returning to a selected timer list restores the previous list combination.
+- No permissions, decoder layouts or minimum meter version changed.
+
+Validation uses synthetic timers and a mocked host, with no game connection:
+
+```
+node --test tests/event-timers-views.test.mjs
+node --check plugins/event-timers/plugin.js
+python tools/build_catalog.py
+```
+
+The regression tests cover combined views, single-list selection, saved preferences, hide/restore actions, keyboard focus across timer redraws, unchanged alerts, and scheduled/world-boss filtering. CI runs them alongside the existing catalog and script checks. A browser preview at the panel's configured 420 × 560 size checks the controls and layout; it does not verify live game reports.
