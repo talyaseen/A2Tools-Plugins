@@ -3,7 +3,7 @@
 // settings.
 const grid = document.querySelector(".grid");
 let locked = false;
-let look = { size: 42, direction: "right", opacity: 1, numbers: true, readyGlow: true, ring: false };
+let look = { size: 42, direction: "right", opacity: 1, numbers: true, readyGlow: true, ring: false, preview: false };
 let slots = [];
 const nodes = new Map(); // key -> { el, slot, wasCooling }
 
@@ -20,6 +20,7 @@ function build() {
   grid.className = `grid ${look.direction}`;
   document.body.classList.toggle("noNumbers", !look.numbers);
   document.body.classList.toggle("ringMode", !!look.ring);
+  document.body.classList.toggle("buffSweepMode", look.buffStyle === "sweep");
   // Out of combat the icons fade, unless they are unlocked to be placed.
   grid.style.opacity = look.away && locked ? "0" : String(look.opacity ?? 1);
   const keep = new Set(slots.map((s) => s.key));
@@ -34,7 +35,7 @@ function build() {
     if (!n) {
       const el = document.createElement("div");
       el.className = "slot";
-      for (const c of ["art", "sweep", "ring", "bar", "num cdNum", "num buffNum", "num chNum"]) {
+      for (const c of ["art", "sweep", "buffSweep", "ring", "bar", "num cdNum", "num buffNum", "num chNum"]) {
         const part = document.createElement(c.startsWith("num") ? "span" : "div");
         part.className = c;
         el.append(part);
@@ -60,22 +61,26 @@ function tick() {
     const buffing = s.buffEnd > now;
     el.classList.toggle("cooling", cooling);
     el.classList.toggle("buffing", buffing);
-    el.classList.toggle("both", cooling && buffing);
     // Charges (a skill's variant with them): how many there are now, one
     // back every chPer ms until chFull; the count shows while there are any.
     const charges = s.chMax ? s.chMax - Math.min(s.chMax, Math.ceil(Math.max(0, s.chFull - now) / s.chPer)) : 0;
     const recharging = !!s.chMax && charges < s.chMax;
+    el.classList.toggle("recharging", recharging);
+    el.classList.toggle("both", (cooling || recharging) && buffing);
     const chNum = el.querySelector(".chNum");
     const chText = s.chMax && charges ? String(charges) : "";
     if (chNum.textContent !== chText) chNum.textContent = chText;
     const active = cooling || buffing || recharging || s.always;
-    el.hidden = !active && locked;
+    el.hidden = !active && (locked || !look.preview);
     el.classList.toggle("idle", !active);
     const cdNum = el.querySelector(".cdNum");
-    if (cooling) {
-      const total = Math.max(1, s.cdEnd - s.cdStart);
-      el.style.setProperty("--p", `${Math.min(360, ((s.cdEnd - now) / total) * 360)}deg`);
-      cdNum.textContent = fmt(s.cdEnd - now);
+    if (cooling || recharging) {
+      // With charges left the skill is usable, but its next charge is still
+      // recharging. Show that timer instead of waiting for every charge to go.
+      const end = recharging ? s.chFull - (s.chMax - charges - 1) * s.chPer : s.cdEnd;
+      const total = Math.max(1, recharging ? s.chPer : s.cdEnd - s.cdStart);
+      el.style.setProperty("--p", `${Math.max(0, Math.min(360, ((end - now) / total) * 360))}deg`);
+      cdNum.textContent = fmt(end - now);
     } else {
       cdNum.textContent = "";
     }
@@ -87,6 +92,7 @@ function tick() {
       left = Math.max(0, Math.min(1, (s.buffEnd - now) / total));
       el.style.setProperty("--w", `${left * 100}%`);
       el.style.setProperty("--r", `${left * 360}deg`);
+      el.style.setProperty("--bp", `${(1 - left) * 360}deg`);
       el.querySelector(".buffNum").textContent = fmt(s.buffEnd - now);
     }
     // A buff kept on screen while it isn't on you: near black. With the

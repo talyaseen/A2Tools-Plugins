@@ -97,7 +97,7 @@ function byFamily(buffs) {
 
 // The look and the alerts, for every character.
 const DEFAULTS = {
-  show: true, autoAdd: true, ownBuffs: true,
+  show: true, autoAdd: true, ownBuffs: true, setupScope: "character", preview: false,
   layout: "combined", size: "42", direction: "right", perLine: 10, opacity: 100,
   numbers: true, readyGlow: true, sound: "chime", voice: false, lead: 3,
   combatOnly: false, combatAfter: 10,
@@ -114,6 +114,48 @@ let prefs = { ...DEFAULTS };
 // learned: { g: ms } }, by "name@server".
 let charKey = "?";
 let mine = { cls: null, skills: {}, buffs: {}, learned: {}, learnedV: 2 };
+// Class setups share choices, not measured cooldowns: equipment can differ
+// between two characters of the same class. Keep the personal choices intact
+// while the class setup is selected, so changing back never loses them.
+let personalSetup = { skills: {}, buffs: {} };
+let activeClassSetup = null;
+let setupRevision = 0;
+let characterRevision = 0;
+let pendingCharacter = null;
+let pendingSetupRevision = null;
+let setupCasts = new Map();
+let setupCastSerial = 0;
+// A stored profile can replace these choices after an await. Keep its row
+// controls unavailable until the latest identity and scope have settled.
+function setupPending() {
+  return pendingSetupRevision === setupRevision ||
+    (pendingCharacter?.revision === characterRevision && pendingCharacter.key !== charKey);
+}
+function updateSetupEditing() {
+  const pending = setupPending();
+  for (const field of document.querySelectorAll(".setupChoices")) {
+    field.disabled = pending;
+    field.setAttribute("aria-busy", String(pending));
+  }
+}
+function finishSetupRead(revision) {
+  if (pendingSetupRevision === revision) pendingSetupRevision = null;
+  updateSetupEditing();
+}
+const copyOptions = (m) => ({
+  skills: Object.fromEntries(Object.entries(m?.skills || {}).map(([key, value]) => [key, { ...value }])),
+  buffs: Object.fromEntries(Object.entries(m?.buffs || {}).map(([key, value]) => [key, { ...value }])),
+});
+const noteSetupCast = (group) => setupCasts.set(group, ++setupCastSerial);
+function choicesAfterCasts(choices, since, casts) {
+  const selected = copyOptions(choices);
+  if (prefs.autoAdd) {
+    for (const [group, serial] of casts) {
+      if (serial > since && listed(group) && !selected.skills[group]) selected.skills[group] = { show: true };
+    }
+  }
+  return selected;
+}
 // Times learnt before 0.1.6 are dropped once: one early use could set a
 // time far too short, and an early use only ever lowers it again.
 const LEARNED_V = 2;
@@ -144,11 +186,85 @@ function charStoreKey(key) {
 }
 const storeMine = (key, value) => a2.storage.set(charStoreKey(key), value).catch(() => {});
 let saving = null;
-// Per character, a moment after the last change (casts change it often).
+function storeCurrentSetup() {
+  const choices = activeClassSetup ? personalSetup : mine;
+  const own = { ...mine, ...copyOptions(choices), learned: { ...mine.learned } };
+  const writes = [storeMine(charKey, own)];
+  if (activeClassSetup) writes.push(a2.storage.set(`class_${activeClassSetup}`, copyOptions(mine)).catch(() => {}));
+  return Promise.all(writes);
+}
+// A moment after the last change (casts change measured times often).
 const saveMine = () => {
   clearTimeout(saving);
-  saving = setTimeout(() => storeMine(charKey, mine), 1500);
+  saving = setTimeout(storeCurrentSetup, 1500);
 };
+
+async function applySetupScope(revision, since = setupCastSerial, casts = setupCasts) {
+  const cls = String(mine.cls || "");
+  if (prefs.setupScope !== "class" || !/^1[1-9]$/.test(cls)) {
+    activeClassSetup = null;
+    mine = { ...mine, ...choicesAfterCasts(personalSetup, since, casts) };
+    return;
+  }
+  const stored = await a2.storage.get(`class_${cls}`).catch(() => null);
+  if (revision !== setupRevision) return;
+  const choices = stored && typeof stored === "object" ? stored : personalSetup;
+  mine = { ...mine, ...choicesAfterCasts(choices, since, casts) };
+  activeClassSetup = cls;
+  if (!stored) await a2.storage.set(`class_${cls}`, copyOptions(mine)).catch(() => {});
+}
+
+async function selectSetupScope(value) {
+  const scope = value === "class" ? "class" : "character";
+  const revision = ++setupRevision;
+  pendingSetupRevision = revision;
+  updateSetupEditing();
+  try {
+    const since = setupCastSerial, casts = setupCasts;
+    clearTimeout(saving);
+    if (!activeClassSetup) personalSetup = copyOptions(mine);
+    const stored = storeCurrentSetup();
+    // The selected scope is user intent, independent of a character read.
+    // A new identity must use it even if saving the former setup is delayed.
+    prefs.setupScope = scope;
+    save();
+    await stored;
+    if (revision !== setupRevision) return;
+    await applySetupScope(revision, since, casts);
+    if (revision === setupRevision) { saveMine(); renderAll(); }
+  } finally {
+    finishSetupRead(revision);
+  }
+}
+
+// The character event usually supplies the class. If it was unknown at
+// login, a skill can establish it later without replacing measured times.
+async function refreshClassSetup(usedGroup) {
+  if (prefs.setupScope !== "class" || activeClassSetup === String(mine.cls || "")) return;
+  const revision = ++setupRevision;
+  pendingSetupRevision = revision;
+  updateSetupEditing();
+  try {
+    const since = setupCastSerial, casts = setupCasts;
+    clearTimeout(saving);
+    if (!activeClassSetup) personalSetup = copyOptions(mine);
+    await storeCurrentSetup();
+    if (revision !== setupRevision) return;
+    await applySetupScope(revision, since, casts);
+    if (revision === setupRevision) {
+      // A first cast may establish the class while its saved setup is loading.
+      // Keep that cast's auto-added icon without overriding an explicit choice.
+      if (usedGroup && prefs.autoAdd && listed(usedGroup) && !mine.skills[usedGroup]) {
+        mine.skills[usedGroup] = { show: true };
+        saveMine();
+      }
+      saveMine();
+      renderAll();
+    }
+  } finally {
+    finishSetupRead(revision);
+  }
+}
 
 // The meter names classes in Korean; the skill data keys them by the skills'
 // first two digits (entity/job_class.rs from_prefix).
@@ -163,6 +279,7 @@ function takeClass(c) {
   mine.cls = cls;
   saveMine();
   renderSkills();
+  refreshClassSetup();
 }
 
 async function loadCharacter(c) {
@@ -173,30 +290,67 @@ async function loadCharacter(c) {
   if (!c || !c.name) return;
   const server = Number(c.serverId) || 0;
   const key = `${c.name}@${server || ""}`;
-  // The same name with another server is the same character, its server
-  // reported again as the meter relearns it; it moves only from a server
-  // not known yet (0) to the real one, whose setup is the one saved.
+  // A missing server is temporary metadata, so keep a known identity.
+  // Two known servers are distinct characters even when their names match.
+  // Only a provisional identity (server 0) can carry into its real server.
   const knownServer = Number(charKey.split("@")[1]) || 0;
-  if (c.name === charName && (key === charKey || knownServer || !server)) {
+  if (c.name === charName && (key === charKey || !server)) {
+    // The player returned to the character already shown while another
+    // character's stored setup was loading. Only cancel that switch, not
+    // an unrelated class-setup selection or an ordinary metadata refresh.
+    if (pendingCharacter?.revision === characterRevision &&
+        (pendingCharacter.name !== c.name || (server && pendingCharacter.key !== key))) {
+      ++characterRevision;
+      pendingCharacter = null;
+      updateSetupEditing();
+    }
     takeClass(c);
     return;
   }
-  const sameCharacter = c.name === charName;
-  charName = c.name;
-  clearTimeout(saving);
-  if (charKey !== "?" && !sameCharacter) await storeMine(charKey, mine);
-  const stored = await a2.storage.get(charStoreKey(key)).catch(() => null);
-  // A first character takes what was set up before its name came, and one
-  // whose server just became known what was set up meanwhile.
-  const carried = (charKey === "?" || sameCharacter) && !stored ? mine : null;
-  charKey = key;
-  mine = fresh({ cls: null, skills: {}, buffs: {}, learned: {}, ...(stored || carried || {}) });
-  takeClass(c);
-  live.cd.clear();
-  live.charges.clear();
-  live.buffs.clear();
-  $(".char").textContent = c && c.name ? c.name : "";
-  renderAll();
+  const sameCharacter = c.name === charName && !knownServer;
+  const revision = ++characterRevision;
+  const request = { name: c.name, key, revision };
+  pendingCharacter = request;
+  let profileRevision = null;
+  updateSetupEditing();
+  try {
+    clearTimeout(saving);
+    if (charKey !== "?") await storeCurrentSetup();
+    if (revision !== characterRevision) return;
+    const stored = await a2.storage.get(charStoreKey(key)).catch(() => null);
+    if (revision !== characterRevision) return;
+    // A first character takes what was set up before its name came, and one
+    // whose server just became known what was set up meanwhile.
+    const carried = (charKey === "?" || sameCharacter) && !stored
+      ? { ...mine, ...copyOptions(activeClassSetup ? personalSetup : mine), learned: { ...mine.learned } }
+      : null;
+    charName = c.name;
+    charKey = key;
+    mine = fresh({ cls: null, skills: {}, buffs: {}, learned: {}, ...(stored || carried || {}) });
+    mine.cls = CLASS_IDS[c?.class] || mine.cls;
+    personalSetup = copyOptions(mine);
+    activeClassSetup = null;
+    setupCasts = new Map();
+    setupCastSerial = 0;
+    // Commit the identity and its live state together. A later scope change
+    // may supersede the class read, and fresh casts during that read belong
+    // to this character, so they must not be cleared when it finishes.
+    for (const key of ["cd", "used", "unsure", "changed", "charges", "samples", "early", "buffs"]) live[key]?.clear();
+    live.clock = null;
+    $(".char").textContent = c.name;
+    // Only committing another identity cancels work for the old profile.
+    // Scope changes while the character read was pending do not cancel it.
+    profileRevision = ++setupRevision;
+    pendingSetupRevision = profileRevision;
+    updateSetupEditing();
+    await applySetupScope(profileRevision);
+    if (revision !== characterRevision || profileRevision !== setupRevision) return;
+    saveMine();
+    renderAll();
+  } finally {
+    if (pendingCharacter === request) pendingCharacter = null;
+    finishSetupRead(profileRevision);
+  }
 }
 
 // ---- What is happening -------------------------------------------------
@@ -246,10 +400,14 @@ function took(g, at) {
   if (mine.cls !== s.cls) {
     mine.cls = s.cls;
     renderSkills();
+    refreshClassSetup(g);
   }
-  if (!mine.skills[g] && prefs.autoAdd && listed(g)) {
-    mine.skills[g] = { show: true };
-    renderSkills();
+  if (prefs.autoAdd && listed(g)) {
+    noteSetupCast(g);
+    if (!mine.skills[g]) {
+      mine.skills[g] = { show: true };
+      renderSkills();
+    }
   }
   lastSkillAt = Math.max(lastSkillAt, at);
   if (away) checkAway();
@@ -438,8 +596,15 @@ function onBuffChanged(d, at) {
   if (Number(d.length) >= ENDLESS || live.clock == null) return;
   const b = live.buffs.get(d.instance);
   const end = Number(d.end) - live.clock;
-  if (b) b.end = end;
-  else live.buffs.set(d.instance, { a: buffKey(Number(d.abnormal)), skill: null, start: at, end });
+  const length = Number(d.length);
+  const knownStart = Number.isFinite(length) && length > 0;
+  if (b) {
+    b.end = end;
+    // Respect the server's complete interval: a reapply can restart it,
+    // while a stack change can keep the original beginning.
+    if (knownStart) b.start = end - length;
+  }
+  else live.buffs.set(d.instance, { a: buffKey(Number(d.abnormal)), skill: null, start: knownStart ? end - length : at, end });
   changed();
 }
 
@@ -553,7 +718,7 @@ async function placeWidgets() {
 function send() {
   if (!openNow.size) return;
   const { skills, buffs } = slots();
-  const look = { size: Number(prefs.size), direction: prefs.direction, perLine: prefs.perLine, opacity: prefs.opacity / 100, numbers: prefs.numbers, readyGlow: prefs.readyGlow, ring: prefs.buffStyle === "ring", away };
+  const look = { size: Number(prefs.size), direction: prefs.direction, perLine: prefs.perLine, opacity: prefs.opacity / 100, numbers: prefs.numbers, readyGlow: prefs.readyGlow, ring: prefs.buffStyle === "ring", buffStyle: prefs.buffStyle, preview: prefs.preview, away };
   if (openNow.has("bar")) a2.widgets.send("bar", { look, slots: [...skills, ...buffs] }).catch(() => {});
   if (openNow.has("skills")) a2.widgets.send("skills", { look, slots: skills }).catch(() => {});
   if (openNow.has("buffs")) a2.widgets.send("buffs", { look, slots: buffs }).catch(() => {});
@@ -636,7 +801,7 @@ const els = {
   layout: $(".layout"), size: $(".size"), direction: $(".direction"), perLine: $(".perLine"), opacity: $(".opacity"),
   numbers: $(".numbers"), readyGlow: $(".readyGlow"), sound: $(".sound"), voice: $(".voice"), lead: $(".lead"),
   combatOnly: $(".combatOnly"), combatAfter: $(".combatAfter"),
-  buffStyle: $(".buffStyle"), volume: $(".volume"), voiceName: $(".voiceName"),
+  buffStyle: $(".buffStyle"), volume: $(".volume"), voiceName: $(".voiceName"), preview: $(".preview"), setupScope: $(".setupScope"),
   voiceType: $(".voiceType"), voiceRate: $(".voiceRate"),
 };
 let tab = "skills";
@@ -734,6 +899,7 @@ function row({ id, icon, name, time, timeTitle, shown, onShow, options }) {
 }
 
 function renderSkills() {
+  const editRevision = setupRevision, editCharacter = charKey;
   const list = $(".skillList");
   const cls = mine.cls;
   $(".cls").textContent = cls ? words.classes[cls] || "" : words.noClass;
@@ -746,6 +912,7 @@ function renderSkills() {
       const learned = mine.learned[g];
       const ch = live.charges.get(g);
       const set = (key, value) => {
+        if (setupPending() || editRevision !== setupRevision || editCharacter !== charKey) return;
         mine.skills[g] = { ...(mine.skills[g] || {}), [key]: value };
         saveMine();
         if (key === "show") placeWidgets();
@@ -768,6 +935,7 @@ function renderSkills() {
 }
 
 function renderBuffs() {
+  const editRevision = setupRevision, editCharacter = charKey;
   const list = $(".buffList");
   const filter = $(".buffFilter").value.trim().toLowerCase();
   // The buffs you've had, latest first, then your class's own not had yet
@@ -785,6 +953,7 @@ function renderBuffs() {
       const o = mine.buffs[a] || {};
       const skill = o.skill || SELF_SKILL.get(a);
       const set = (key, value) => {
+        if (setupPending() || editRevision !== setupRevision || editCharacter !== charKey) return;
         // A class buff not had yet gets its row on its first change.
         const was = mine.buffs[a] || { show: false, added: Date.now(), ...(SELF_SKILL.has(a) ? { skill: SELF_SKILL.get(a) } : {}) };
         mine.buffs[a] = { ...was, [key]: value };
@@ -834,6 +1003,10 @@ $(".buffFilter").addEventListener("input", renderBuffs);
 for (const [key, el] of Object.entries(els)) {
   if (key === "lock") continue;
   el.addEventListener(el.type === "range" ? "input" : "change", () => {
+    if (key === "setupScope") {
+      selectSetupScope(el.value).catch(renderAll);
+      return;
+    }
     let v = el.type === "checkbox" ? el.checked : el.value;
     if (key === "perLine") v = Math.max(1, Math.min(20, Math.round(Number(v)) || DEFAULTS.perLine));
     if (key === "lead") v = Math.max(1, Math.min(30, Math.round(Number(v)) || DEFAULTS.lead));
@@ -843,7 +1016,7 @@ for (const [key, el] of Object.entries(els)) {
     if (el.type === "number") el.value = v;
     save();
     if (["show", "layout", "size", "direction", "perLine"].includes(key)) placeWidgets();
-    else if (["ownBuffs", "opacity", "numbers", "readyGlow", "buffStyle"].includes(key)) send();
+    else if (["ownBuffs", "opacity", "numbers", "readyGlow", "buffStyle", "preview"].includes(key)) send();
     if (key === "volume") setSoundVolume(v);
     // A voice of the other type gives way to the first of this one.
     if (key === "voiceType") {

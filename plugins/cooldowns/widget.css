@@ -41,15 +41,22 @@ html, body {
 }
 .slot[hidden] { display: none; }
 body:not(.locked) .slot { cursor: grab; }
-/* Unlocked, every icon shows, dimmed when there is nothing to show, so the
-   bar can be placed. */
+/* Explicit preview shows inactive icons dimmed while the bar is unlocked. */
 .slot.idle { opacity: 0.35; }
 .sweep {
   position: absolute;
   inset: 0;
   background: conic-gradient(rgba(0, 0, 0, 0.68) var(--p, 0deg), rgba(0, 0, 0, 0.12) 0);
 }
-.slot:not(.cooling) .sweep { display: none; }
+.slot:not(.cooling):not(.recharging) .sweep { display: none; }
+.buffSweep {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(rgba(0, 0, 0, 0.72) var(--bp, 0deg), transparent 0);
+}
+.buffSweepMode .slot.buffing .buffSweep { display: block; }
+.buffSweepMode .slot.buffing .bar { display: none; }
 .num {
   position: absolute;
   font-family: "Bahnschrift", "Segoe UI", sans-serif;

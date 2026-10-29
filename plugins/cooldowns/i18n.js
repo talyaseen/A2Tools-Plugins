@@ -198,6 +198,20 @@ const VOICE_WORDS = {
 };
 for (const [code, w] of Object.entries(VOICE_WORDS)) Object.assign(UI[code], w);
 
+const SETUP_WORDS = {
+  en: { setupScope: "Skill and buff setup", setupCharacter: "This character", setupClass: "Share across this class", setupNote: "Class setups share selected skills, buffs and alerts. Measured cooldowns stay with each character.", preview: "Preview inactive icons while unlocked", styleSweep: "Clockwise fade" },
+  ko: { setupScope: "스킬 및 버프 설정", setupCharacter: "이 캐릭터", setupClass: "같은 직업끼리 공유", setupNote: "선택한 스킬, 버프, 알림을 같은 직업끼리 공유합니다. 측정한 재사용 시간은 캐릭터별로 유지됩니다.", preview: "잠금 해제 시 비활성 아이콘 미리 보기", styleSweep: "시계 방향 음영" },
+  ja: { setupScope: "スキルとバフの設定", setupCharacter: "このキャラクター", setupClass: "同じクラスで共有", setupNote: "選んだスキル、バフ、通知を同じクラスで共有します。測定したクールタイムはキャラクターごとに保存します。", preview: "ロック解除時に非アクティブなアイコンをプレビュー", styleSweep: "時計回りの陰影" },
+  de: { setupScope: "Skill- und Buff-Einstellungen", setupCharacter: "Dieser Charakter", setupClass: "In dieser Klasse teilen", setupNote: "Ausgewählte Skills, Buffs und Hinweise werden pro Klasse geteilt. Gemessene Abklingzeiten bleiben beim Charakter.", preview: "Inaktive Symbole bei gelöster Sperre einblenden", styleSweep: "Schatten im Uhrzeigersinn" },
+  fr: { setupScope: "Configuration des compétences et buffs", setupCharacter: "Ce personnage", setupClass: "Partager avec cette classe", setupNote: "La classe partage les compétences, buffs et alertes choisis. Les recharges mesurées restent propres à chaque personnage.", preview: "Prévisualiser les icônes inactives déverrouillées", styleSweep: "Ombre dans le sens horaire" },
+  es: { setupScope: "Configuración de habilidades y mejoras", setupCharacter: "Este personaje", setupClass: "Compartir con esta clase", setupNote: "Comparte las habilidades, mejoras y alertas elegidas por clase. Los enfriamientos medidos siguen siendo de cada personaje.", preview: "Previsualizar iconos inactivos al desbloquear", styleSweep: "Sombra en sentido horario" },
+  pt: { setupScope: "Configuração de habilidades e buffs", setupCharacter: "Este personagem", setupClass: "Compartilhar com esta classe", setupNote: "Compartilha as habilidades, buffs e alertas escolhidos por classe. As recargas medidas continuam por personagem.", preview: "Visualizar ícones inativos quando desbloqueados", styleSweep: "Sombra no sentido horário" },
+  ru: { setupScope: "Настройка умений и баффов", setupCharacter: "Этот персонаж", setupClass: "Общая для этого класса", setupNote: "Выбранные умения, баффы и оповещения общие для класса. Измеренные перезарядки сохраняются отдельно для персонажей.", preview: "Показывать неактивные значки без блокировки", styleSweep: "Тень по часовой стрелке" },
+  "zh-Hant": { setupScope: "技能與增益設定", setupCharacter: "此角色", setupClass: "同職業共用", setupNote: "同職業共用選取的技能、增益與提醒。測量的冷卻時間仍按角色保存。", preview: "解鎖時預覽未啟用的圖示", styleSweep: "順時針陰影" },
+  "zh-Hans": { setupScope: "技能与增益设置", setupCharacter: "此角色", setupClass: "同职业共用", setupNote: "同职业共用选取的技能、增益与提醒。测量的冷却时间仍按角色保存。", preview: "解锁时预览未启用的图标", styleSweep: "顺时针阴影" },
+};
+for (const [code, w] of Object.entries(SETUP_WORDS)) Object.assign(UI[code], w);
+
 // The alert sounds offered (sounds.js), and their names.
 const SOUND_ORDER = ["chime", "bell", "ping", "soft", "crystal", "marimba", "kalimba", "sonar"];
 const SOUND_NAMES = {

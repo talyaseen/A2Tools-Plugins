@@ -14,6 +14,13 @@
       <label class="switch"><span data-t="showWidget">Show the icons</span><input type="checkbox" class="show" /></label>
       <label class="switch"><span data-t="lock">Lock in place</span><input type="checkbox" class="lock" /></label>
     </header>
+    <label class="row"><span data-t="setupScope">Skill and buff setup</span>
+      <select class="setupScope">
+        <option value="character" data-t="setupCharacter">This character</option>
+        <option value="class" data-t="setupClass">Share across this class</option>
+      </select>
+    </label>
+    <p class="note" data-t="setupNote">Class setups share selected skills, buffs and alerts. Measured cooldowns stay with each character.</p>
     <nav class="tabs" role="tablist">
       <button type="button" class="tab isActive" data-tab="skills" data-t="skills">Skills</button>
       <button type="button" class="tab" data-tab="buffs" data-t="buffs">Buffs</button>
@@ -24,7 +31,7 @@
     <section class="pane" data-pane="skills">
       <label class="switch"><span data-t="autoAdd">Add skills as you use them</span><input type="checkbox" class="autoAdd" /></label>
       <input type="search" class="filter skillFilter" data-tp="filter" placeholder="Filter" />
-      <ul class="list skillList"></ul>
+      <fieldset class="setupChoices"><ul class="list skillList"></ul></fieldset>
       <p class="empty skillEmpty" data-t="classNone">Use a skill in game and your class's skills show here.</p>
       <p class="note" data-t="learnNote">Cooldowns marked ≈ are the game's base times. Each one is measured as you play, cooldown reduction included.</p>
     </section>
@@ -32,7 +39,7 @@
     <section class="pane" data-pane="buffs" hidden>
       <label class="switch"><span data-t="ownBuffs">Show my skills' buffs on their icons</span><input type="checkbox" class="ownBuffs" /></label>
       <input type="search" class="filter buffFilter" data-tp="filter" placeholder="Filter" />
-      <ul class="list buffList"></ul>
+      <fieldset class="setupChoices"><ul class="list buffList"></ul></fieldset>
       <p class="empty buffEmpty" data-t="buffsNone">Buffs you get show here.</p>
     </section>
 
@@ -65,9 +72,11 @@
         <select class="buffStyle">
           <option value="bar" data-t="styleBar">Green bar</option>
           <option value="ring" data-t="styleRing">Ring, icon dims</option>
+          <option value="sweep" data-t="styleSweep">Clockwise fade</option>
         </select>
       </label>
       <label class="switch"><span data-t="numbers">Show seconds</span><input type="checkbox" class="numbers" /></label>
+      <label class="switch"><span data-t="preview">Preview inactive icons while unlocked</span><input type="checkbox" class="preview" /></label>
       <label class="switch"><span data-t="readyGlow">Flash when ready</span><input type="checkbox" class="readyGlow" /></label>
       <label class="switch"><span data-t="combatOnly">Hide outside combat</span><input type="checkbox" class="combatOnly" /></label>
       <label class="row combatAfterRow"><span data-t="combatAfter">after no skill for</span><span class="num"><input type="number" class="combatAfter" min="3" max="120" step="1" /> s</span></label>
